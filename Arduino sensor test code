@@ -1,0 +1,93 @@
+
+//----------INTRODUCTION----------//
+// Example testing sketch for various DHT humidity/temperature sensors
+// Written by ladyada, public domain
+// Modified by Hannah van Iterson, 2020
+// Examples for Hygro sensor taken from: https://maker.pro/arduino/projects/arduino-soil-moisture-sensor
+
+//----------HARDWARE----------//
+// Using the AM2302 already soldered to a sensorboard
+// Connect pin 1 (on the left) of the sensor to +5V
+// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 3 (on the right) of the sensor to GROUND
+
+//----------LIBRARIES----------//
+// REQUIRES the following Arduino libraries:
+// - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
+// - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+
+
+//----------PARAMETERS----------//
+#define DHTPIN 2     // Digital pin connected to the DHT sensor
+
+// Uncomment whatever type you're using!
+//#define DHTTYPE DHT11   // DHT 11
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+DHT dht(DHTPIN, DHTTYPE);
+
+int sensor_pin = A0; // Soil Sensor input at Analog PIN A0
+int output_value ; 
+int output_value_mapped; 
+
+//----------CODE----------//
+void setup() {
+  Serial.begin(9600);
+  Serial.println(F("Temperature and Humidity sensor"));
+  Serial.println("Soil Hygrometer");
+  dht.begin();
+}
+
+void loop() {
+  // Time between measurements.
+  delay(5000);
+
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (it is a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println(F("Failed to read from sensor!"));
+    return;
+  }
+
+  // Compute heat index in Celsius (isFahreheit = false)
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  // Output control for Hygrometer
+  // Test and tweek these values using the "Soil moisture sensor value"
+  // Dry soil = the sensor value 1020. This is mapped to 0% moisture
+  // Wet soil = the sensor value 220. This is mapped to 100% moisture
+  output_value= analogRead(sensor_pin);
+  output_value_mapped = map(output_value,1020,210,0,100);
+  
+  Serial.print(F("---------------------------"));
+  Serial.println();
+  Serial.print(F("Humidity: "));
+  Serial.print(h);
+  Serial.print(F("%"));
+  Serial.println();
+  Serial.print(F("Temperature: "));
+  Serial.print(t);
+  Serial.print(F("°C "));
+  Serial.println();
+  Serial.print(F("Heat index: "));
+  Serial.print(hic);
+  Serial.print(F("°C "));
+  Serial.println();
+  // Comment this one out when not testing. From here...
+  Serial.print("Soil moisture sensor value : ");
+  Serial.print(output_value);  
+  Serial.println();
+  // ...till here. 
+  Serial.print("Soil moisture : ");
+  Serial.print(output_value_mapped);
+  Serial.println("%");
+  Serial.println();
+}
