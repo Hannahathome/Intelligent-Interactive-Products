@@ -1,0 +1,89 @@
+//*********************************************
+// Time-Series Signal Processing
+// Rong-Hao Liang: r.liang@tue.nl
+// Modified by Hannah van Iterson 2020: h.c.v.iterson@student.tue.nl
+//*********************************************
+
+//----------LIBRARIES----------//
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+#include <SoftwareSerial.h>
+
+
+//----------PARAMETERS----------//
+#define MICRO_S 1000000                                                       //125Hz = 1M/MICRO_S;
+#define DHTPIN 2                                                              // Digital pin connected to the DHT sensor
+#define PIN_NUM 0                                                             //Analog pin connected to moisture sensor
+#define DHTTYPE DHT22                                                         // DHT 22  (AM2302), AM2321
+
+DHT dht(DHTPIN, DHTTYPE);
+
+int sensor_pin = A0;                                                          // Soil Sensor input at Analog PIN A0
+int output_value ;                                                            // Soil Sensor output 
+int soilmoisture;                                                             // Soil Sensor output mapped 
+long timer = micros();                                                        //timer
+
+//----------CODE----------//
+void setup() {
+  Serial.begin(9600);                                                         //initialize a serial port at a 115200 baud rate.
+  pinMode(LED_BUILTIN, OUTPUT);                                               //set the built-in LED to output
+  dht.begin();
+}
+
+void loop() {                                                                 // put your main code here, to run repeatedly:
+  if (micros() - timer > MICRO_S) {                                           //Timer
+    timer = micros();
+    getDataFromProcessing();                                                  //Receive before sending out the signals
+    Serial.flush();                                                           //Flush the serial buffer
+
+    float humidity = dht.readHumidity();                                      // Read humidity (percentage) 
+    float temperature = dht.readTemperature();                                // Read temperature as Celsius (the default)
+    float heatindex = dht.computeHeatIndex(temperature, humidity, false);     // Compute heat index in Celsius (isFahreheit = false)
+    output_value = analogRead(sensor_pin);
+    soilmoisture = map(output_value, 1020, 210, 0, 100);
+
+    sendDataToProcessing('A', humidity); 
+    sendDataToProcessing('B', temperature); 
+    sendDataToProcessing('C', heatindex); 
+    sendDataToProcessing('D', soilmoisture); 
+
+//----------CHECKING STREAM----------//
+    Serial.print(F("---------------------------"));
+    Serial.println();
+    Serial.print(F("Humidity: "));
+    Serial.print(humidity);
+    Serial.print(F("%"));
+    Serial.println();
+    Serial.print(F("Temperature: "));
+    Serial.print(temperature);
+    Serial.print(F("°C "));
+    Serial.println();
+    Serial.print(F("Heat index: "));
+    Serial.print(heatindex);
+    Serial.print(F("°C "));
+    Serial.println();
+    // Comment this one out when not testing. From here...
+    // Serial.print("Soil moisture sensor value : ");
+    // Serial.print(output_value);
+    // Serial.println();
+    // ...till here.
+    Serial.print("Soil moisture : ");
+    Serial.print(soilmoisture);
+    Serial.println("%");
+    Serial.println();
+  }
+}
+
+void getDataFromProcessing() {
+  while (Serial.available()) {
+    char inChar = (char)Serial.read();
+  }
+}
+
+void sendDataToProcessing(char symbol, int data) {
+  Serial.print(symbol);                                                       // symbol prefix of data type
+  Serial.println(data);                                                       // the integer data with a carriage return
+}
