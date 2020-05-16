@@ -55,8 +55,8 @@ float[] appendArray (float[] _array, float _val) {
 void initSerial() {
   //Initiate the serial port
   for (int i = 0; i < Serial.list().length; i++) println("[", i, "]:", Serial.list()[i]);
-  //String portName = Serial.list()[Serial.list().length-1];          //MAC: check the printed list
-  String portName = Serial.list()[9];//WINDOWS: check the printed list
+  String portName = Serial.list()[Serial.list().length-1];          //MAC: check the printed list
+  //String portName = Serial.list()[9];//WINDOWS: check the printed list
   port = new Serial(this, portName, 9600);
   port.bufferUntil('\n'); // arduino ends each data packet with a carriage return 
   port.clear();           // flush the Serial buffer
