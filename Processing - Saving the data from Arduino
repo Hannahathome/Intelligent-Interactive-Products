@@ -1,0 +1,155 @@
+//*********************************************
+// Inspiration taken from:
+// Example Code for Interactive Intelligent Products. Written by: Rong-Hao Liang: r.liang@tue.nl
+// Adapted by Hannah van Iterson; h.c.v.iterson@student.tue.nl
+//*********************************************
+
+//----------Import-----------//
+import processing.serial.*;
+
+//----------Values-----------//
+Serial port; 
+
+int dataNum = 100;                             //number of rows you want in your set
+int sensorNum = 3;                             //number of sensors
+int[][] rawData = new int[sensorNum][dataNum]; //dataarray based on sensornumber and data
+int dataIndex = 0;                             //index goes up everytime a line is added to the table
+int labelIndex = 0;                            //label of the row 
+
+Table csvData;
+boolean b_saveCSV = false;                                                          //use boolean to control when to save the file
+String dataSetName = "TESTDATA";                                                    //name of datafile
+String[] attrNames = new String[]{"Time", "Temperature", "Soil Humidity", "label"}; //names of the columns of the datatable
+boolean[] attrIsNominal = new boolean[]{false, false, false, true};                 //nominal data? yes or no
+
+
+//-------------------------------------------------------------------------------------------------------------------------//
+//--------ACTUAL CODE--------//
+
+void setup() {
+  //-INITIALIZE THE SERIAL PORT-// 
+  for (int i = 0; i < Serial.list().length; i++) println("[", i, "]:", Serial.list()[i]);
+  String portName = Serial.list()[Serial.list().length-1];                                //check the printed list
+  port = new Serial(this, portName, 9600);                                                //set the port and bautrate
+  port.bufferUntil('\n');                                                                 //arduino ends each data packet with a carriage return 
+  port.clear();                                                                           //flush the serial buffer
+
+//-INITIATE THE DATALIST AND SET THET HEADER OF THE TABLE-//
+  csvData = new Table();                                                                  //csvtable 
+  for (int i = 0; i < attrNames.length; i++) {
+    csvData.addColumn(attrNames[i]);
+    if (attrIsNominal[i]) csvData.setColumnType(i, Table.STRING);
+    else csvData.setColumnType(i, Table.FLOAT);
+  }
+}
+
+
+
+void draw() {
+  background(255);
+  //-PRINT TO CHECK IF THE SERIAL CONNECTION IS UP--//
+  while (port.available() > 0) {  
+    String inBuffer = port.readString(); 
+    if (inBuffer != null) { 
+      //println (inBuffer);
+      //println (dataIndex);
+    }
+  }
+
+  if (dataIndex==dataNum) {
+    b_saveCSV = true; 
+    if (b_saveCSV) {
+      for (int n = 0; n < dataNum; n ++) {
+        TableRow newRow = csvData.addRow();                         //make a new table row, and also do that for the csv
+        newRow.setFloat("Time", rawData[0][n]);                     //new row for time
+        newRow.setFloat("Temperature", rawData[1][n]);              //new row for temperature
+        newRow.setFloat("Soil Humidity", rawData[2][n]);            //new row for humidity of the soil
+        newRow.setString("label", getCharFromInteger(labelIndex));  //label for the row number
+      }
+      //-SAVING YA DATA-//
+      saveCSV(dataSetName, csvData);                            
+      saveARFF(dataSetName, csvData);
+
+      b_saveCSV = false;
+    }
+  }
+}
+
+
+//-TRIMMING AND RENAMING THE DATA AS IT ARRIVES-//
+void serialEvent(Serial port) {   
+  String inData = port.readStringUntil('\n');  // read the serial string until seeing a carriage return
+  
+  if (dataIndex < dataNum) {
+    if (inData.charAt(0) == 'A') {
+      rawData[0][dataIndex] = int(trim(inData.substring(1))); //make a new row in the time column with the data with the label '0' as name for sensor 1 (in arduino: A) 
+    }
+    if (inData.charAt(0) == 'B') {
+      rawData[1][dataIndex] = int(trim(inData.substring(1))); //make a new row in the time column with the data with the label '1' as name for sensor 2 (in arduino: B) 
+    }
+    if (inData.charAt(0) == 'C') {
+      rawData[2][dataIndex] = int(trim(inData.substring(1))); //make a new row in the time column with the data with the label '2' as name for sensor 3 (in arduino: C)
+      
+      ++ dataIndex;                                           //row number increases by one
+      println(dataIndex);                                     //check how many rows your set already has
+    }
+  }
+  return;
+}
+
+String getCharFromInteger(double i) {                         //0 = A, 1 = B, and so forth
+  return ""+char(min((int)(i+'A'), 90));
+}
+
+
+
+//-CSV SAVING-//
+void saveCSV(String dataSetName, Table csvData) {
+  saveTable(csvData, dataPath(dataSetName+".csv"));           
+  println("Saved as: ", dataSetName+".csv");
+}
+
+//-ARFF SAVING-//   (PLEASE DO NOT ASK ME HOW THIS WORKS, I LITERALLY COPIED THIS)                      
+void saveARFF(String dataSetName, Table csvData) {          
+  String[] attrNames = csvData.getColumnTitles();
+  int[] attrTypes = csvData.getColumnTypes();
+  int lineCount = 1 + attrNames.length + 1 + (csvData.getRowCount()); //@relation + @attribute + @data + CSV
+  String[] text = new String[lineCount];
+  text[0] = "@relation "+dataSetName;
+  for (int i = 0; i < attrNames.length; i++) {
+    String s = "";
+    ArrayList<String> dict = new ArrayList<String>();
+    s += "@attribute "+attrNames[i];
+    if (attrTypes[i]==0) {
+      for (int j = 0; j < csvData.getRowCount(); j++) {
+        TableRow row = csvData.getRow(j);
+        String l = row.getString(attrNames[i]);
+        boolean found = false;
+        for (String d : dict) {
+          if (d.equals(l)) found = true;
+        }
+        if (!found) dict.add(l);
+      }
+      s += " {";
+      for (int n=0; n<dict.size(); n++) {
+        s += dict.get(n);
+        if (n != dict.size()-1) s += ",";
+      }
+      s += "}";
+    } else s+=" numeric";
+    text[1+i] = s;
+  }
+  text[1+attrNames.length] = "@data";
+  for (int i = 0; i < csvData.getRowCount(); i++) {
+    String s = "";
+    TableRow row = csvData.getRow(i);
+    for (int j = 0; j < attrNames.length; j++) {
+      if (attrTypes[j]==0) s += row.getString(attrNames[j]);
+      else s += row.getFloat(attrNames[j]);
+      if (j!=attrNames.length-1) s +=",";
+    }
+    text[2+attrNames.length+i] = s;
+  }
+  saveStrings(dataPath(dataSetName+".arff"), text);
+  println("Saved as: ", dataSetName+".arff");
+}
