@@ -1,8 +1,13 @@
 //*********************************************
 // Inspiration taken from:
 // Example Code for Interactive Intelligent Products. Written by: Rong-Hao Liang: r.liang@tue.nl
+// Adapted by Dorien 
 // Adapted by Hannah van Iterson; h.c.v.iterson@student.tue.nl
 //*********************************************
+
+//      ++labelIndex;                                                 //change label 
+
+
 
 //----------Import-----------//
 import processing.serial.*;
@@ -10,7 +15,7 @@ import processing.serial.*;
 //----------Values-----------//
 Serial port; 
 
-int dataNum = 100;                             //number of rows you want in your set
+int dataNum = 20;                             //number of rows you want in your set
 int sensorNum = 3;                             //number of sensors
 int[][] rawData = new int[sensorNum][dataNum]; //dataarray based on sensornumber and data
 int dataIndex = 0;                             //index goes up everytime a line is added to the table
@@ -18,8 +23,8 @@ int labelIndex = 0;                            //label of the row
 
 Table csvData;
 boolean b_saveCSV = false;                                                          //use boolean to control when to save the file
-String dataSetName = "TESTDATA";                                                    //name of datafile
-String[] attrNames = new String[]{"Time", "Temperature", "Soil Humidity", "label"}; //names of the columns of the datatable
+String dataSetName = "TESTDATA2";                                                    //name of datafile
+String[] attrNames = new String[]{"Time", "Temperature", "Soil Humidity", "Label"}; //names of the columns of the datatable
 boolean[] attrIsNominal = new boolean[]{false, false, false, true};                 //nominal data? yes or no
 
 
@@ -64,13 +69,15 @@ void draw() {
         newRow.setFloat("Time", rawData[0][n]);                     //new row for time
         newRow.setFloat("Temperature", rawData[1][n]);              //new row for temperature
         newRow.setFloat("Soil Humidity", rawData[2][n]);            //new row for humidity of the soil
-        newRow.setString("label", getCharFromInteger(labelIndex));  //label for the row number
+        newRow.setString("Label", getCharFromInteger(labelIndex));  //label for the row number
       }
       //-SAVING YA DATA-//
       saveCSV(dataSetName, csvData);                            
       saveARFF(dataSetName, csvData);
 
       b_saveCSV = false;
+        exit();
+
     }
   }
 }
