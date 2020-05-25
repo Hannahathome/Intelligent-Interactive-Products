@@ -17,7 +17,7 @@ The Arduino programs in this repository have been created to be used on an Ardui
 
 
 ## Processing
-Processing is a type of sketchbook software, often used to visualise data. It can be used to do this via the serial connections. Downloading processing can be done [here](https://processing.org/download/). For any additional information or help, please read the [tutorials](https://processing.org/tutorials/) or use the [reference](https://processing.org/reference/).
+Processing is a type of sketchbook software, often used to visualise data. It can be used to do this via the serial connections. Downloading Processing can be done [here](https://processing.org/download/). For any additional information or help, please read the [tutorials](https://processing.org/tutorials/) or use the [reference](https://processing.org/reference/).
 
 
 # Files in this repository 
