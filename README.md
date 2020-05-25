@@ -11,13 +11,13 @@ This first model is a very first iteration, used to learn the very basics of thi
 # Arduino and Processing 
 
 ## Arduino
-Arduino software is used to control the Arduino microcontrollers. Downloading the Arduino IDE can be done via (this website)[https://www.arduino.cc/en/main/software]. If you have any issues or wish to have more information on how to use and program your Arduino, please take a look at (their guides)[https://www.arduino.cc/en/Guide/HomePage]. 
+Arduino software is used to control the Arduino microcontrollers. Downloading the Arduino IDE can be done via [this website](https://www.arduino.cc/en/main/software). If you have any issues or wish to have more information on how to use and program your Arduino, please take a look at [their guides](https://www.arduino.cc/en/Guide/HomePage). 
 
 The Arduino programs in this repository have been created to be used on an Arduino Nano, but should work on most Arduino microcontrollers. 
 
 
 ## Processing
-Processing is a type of sketchbook software, often used to visualise data. It can be used to do this via the serial connections. Downloading processing can be done (here)[https://processing.org/download/]. For any additional information or help, please read the (tutorials)[https://processing.org/tutorials/] or use the (reference)[https://processing.org/reference/].
+Processing is a type of sketchbook software, often used to visualise data. It can be used to do this via the serial connections. Downloading processing can be done [here](https://processing.org/download/). For any additional information or help, please read the [tutorials](https://processing.org/tutorials/) or use the [reference](https://processing.org/reference/).
 
 
 # Files in this repository 
