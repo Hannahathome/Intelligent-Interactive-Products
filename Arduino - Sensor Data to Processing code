@@ -14,9 +14,9 @@
 
 
 //----------PARAMETERS----------//
-#define MICRO_S 1000000                                                       //125Hz = 1M/MICRO_S;
+#define MICRO_S 60 000000                                                       // 1000 000 = 1 second || 60 000 000 = 1 minute
 #define DHTPIN 2                                                              // Digital pin connected to the DHT sensor
-#define PIN_NUM 0                                                             //Analog pin connected to moisture sensor
+#define PIN_NUM 0                                                             // Analog pin connected to moisture sensor
 #define DHTTYPE DHT22                                                         // DHT 22  (AM2302), AM2321
 
 DHT dht(DHTPIN, DHTTYPE);
