@@ -1,0 +1,107 @@
+/*
+  LiquidCrystal Library - Hello World
+
+ Demonstrates the use a 16x2 LCD display.  The LiquidCrystal
+ library works with all LCD displays that are compatible with the
+ Hitachi HD44780 driver. There are many of them out there, and you
+ can usually tell them by the 16-pin interface.
+
+  The circuit:
+ * LCD RS pin to digital pin 12
+ * LCD Enable pin to digital pin 11
+ * LCD D4 pin to digital pin 5
+ * LCD D5 pin to digital pin 4
+ * LCD D6 pin to digital pin 3
+ * LCD D7 pin to digital pin 2
+ * LCD R/W pin to ground
+ * LCD VSS pin to ground
+ * LCD VCC pin to 5V
+ * 10K resistor:
+ * ends to +5V and ground
+ * wiper to LCD VO pin (pin 3)
+
+ Library originally added 18 Apr 2008
+ by David A. Mellis
+ library modified 5 Jul 2009
+ by Limor Fried (http://www.ladyada.net)
+ example added 9 Jul 2009
+ by Tom Igoe
+ modified 22 Nov 2010
+ by Tom Igoe
+ 
+
+ This example code is in the public domain.
+ http://www.arduino.cc/en/Tutorial/LiquidCrystal
+ */
+ 
+//---------------------------------------------------------------------------// 
+ //Edited by Anouk Stijnen for the course IIP at the TU/e 
+ //Added to github by Hannah van Iterson as a groupmember of Anouk Stijnen. 
+//---------------------------------------------------------------------------// 
+
+// include the library code:
+#include <LiquidCrystal.h>
+#include <NewPing.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+int backLight = 6; //controls backlight for lcd
+const int trigPin = 7; //distancesensorpin
+const int echoPin = 8; //distancesensorpin
+//define variables distancesensor
+#define MAX_DISTANCE 100
+NewPing sonar(trigPin, echoPin, MAX_DISTANCE);
+ 
+//create smiley for lcd
+byte smiley[8] = {
+  B00000,
+  B10001,
+  B00000,
+  B00000,
+  B10001,
+  B01110,
+  B00000,
+};
+
+
+void setup() {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  pinMode(backLight, OUTPUT);  
+  // Print a message to the LCD.
+  lcd.createChar(0, smiley);
+  lcd.setCursor(4,0);
+  lcd.print("Water in:");
+  lcd.setCursor(8,1);
+  lcd.print("Hours");
+  lcd.write(byte(0));
+  //distancesensor setup
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  Serial.begin(115200); // Starts the serial communication
+}
+
+void loop() {
+  // set the cursor to column 0, line 1
+  // (note: line 1 is the second row, since counting begins with 0):
+  lcd.setCursor(3, 1);
+ 
+
+      delay(100);                     // Wait 50ms between pings (about 20 pings/sec). 29ms should be the shortest delay between pings.
+    Serial.print("Ping: ");
+    Serial.print(sonar.ping_cm()); // Send ping, get distance in cm and print result (0 = outside set distance range)
+    Serial.println("cm");
+    
+  
+   if(sonar.ping_cm() > 30){
+     digitalWrite(backLight,LOW );// turn off lcd backlight
+     lcd.print("30"); // vervangen door iets van andere code?
+     }
+
+    else{
+     digitalWrite(backLight, HIGH);// turn on lcd backlight
+     delay(1000);
+    
+    }
+ 
+}
