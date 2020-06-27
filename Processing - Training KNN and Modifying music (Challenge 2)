@@ -1,0 +1,180 @@
+//*********************************************
+// Example Code for Interactive Intelligent Products (p5_1d) 
+// Rong-Hao Liang: r.liang@tue.nl
+// Adapted by Hannah van Iterson: h.c.v.iterson@student.tue.nl (2020) 
+//*********************************************
+
+
+// In this version of the code, the rate of the music is changed when looking up and down. as this was more reliable than the pitch. 
+// In this code, one can choose to do the panning of the music in steps, or instantaneously. This is marked in the code. 
+
+//----------LIBRARIES----------//
+//Serial port 
+import processing.serial.*;
+Serial port; 
+
+//Processing sound library 
+import processing.sound.*;
+SoundFile music;
+
+//Processing minim library
+import ddf.minim.*;
+import ddf.minim.spi.*; 
+import ddf.minim.ugens.*;
+Minim minim;
+AudioPlayer player;
+TickRate rateControl;    // control the pitch via tickrate 
+AudioOutput out;
+
+
+//----------PARAMETERS----------//
+int sensorNum = 3;
+int[] rawData = new int[sensorNum];
+boolean dataUpdated = false;
+
+String direction;
+
+//float pan = 0; 
+//float rate = 1;
+
+int pancentre = 0;  // panned to the centre, using value 0.0
+int panright = 1;  // panned to the right, using the value 1.0
+int panleft = -1;  // panned to the left using the value -1.0
+
+float ratehigh = 1.2; 
+float rate = 1; 
+float ratelow = 0.8; 
+
+//----------CODE----------//
+
+void setup() {
+  size(500, 500);             //set a canvas
+
+  //Initialize the serial port
+  for (int i = 0; i < Serial.list().length; i++) println("[", i, "]:", Serial.list()[i]);
+  port = new Serial(this, Serial.list()[0], 9600);
+  port.bufferUntil('\n'); // arduino ends each data packet with a carriage return 
+  port.clear();           // flush the Serial buffer
+
+  //Training the KNN classifier  
+  loadTrainARFF(dataset="accDataPet5.arff"); //load a ARFF dataset
+  trainKNN(K=150);             //train a SV classifier
+  setModelDrawing(unit=2);         //set the model visualization (for 2D features)
+  evaluateTrainSet(fold=10, isRegression=false, showEvalDetails=true);  //5-fold cross validation
+  saveModel(model="KNNPetmulti.model"); //save the model
+
+  //minim = new Minim(this);
+  //player = minim.loadFile("Stars_Align_mono.mp3");
+  music = new SoundFile(this, "Stars_Align_mono_2.wav");  //ensure that the music you import is mono, not stereo, otherwise panning will not be possible. 
+  music.loop();
+}
+
+void draw() {
+  if (dataUpdated) {
+    //Draw the sensoroutput on the screen 
+    background(52);
+    fill(255);
+    float[] X = {rawData[0], rawData[1], rawData[2]}; 
+    String Y = getPrediction(X);
+
+    //if prediction equals label A, B, etc., play music higher pitch/lower pitch or move sound to one side
+    if (Y.equals("A")) {
+      music.rate(rate);           //rate 1 is normal, rate > 1 is higher pitch, rate < 1 is lower pitch
+      music.pan(pancentre);             //pan 0 is middle, pan < 0 is one side on headphones, pan > 0 is the other.
+    } else if (Y.equals("B")) {
+      music.rate(ratelow); 
+      music.pan(pancentre);
+    } else if (Y.equals("C")) {
+      music.rate(rate); 
+      
+      //use this code to pan the music gradually 
+      for (float i = 0; i < panright; i =+0.1 ) { //in ten steps, pan the music to the right 
+        music.pan(i);
+      }
+      
+      //use this one to immediatly switch the music to one side
+      //music.pan(panright); 
+      
+    } else if (Y.equals("D")) {
+      music.rate(ratehigh); 
+      music.pan(pancentre);
+    } else if (Y.equals("E")) {
+      music.rate(rate); 
+      
+      //use this code to pan the music gradually 
+      for (float i = 0; i > panleft; i =-0.1 ) {//in ten steps, pan the music to the left 
+        music.pan(i);
+      }
+      //use this one to immediatly switch the music to one side
+      //music.pan(panleft);  
+    }
+
+    textSize(32);
+    textAlign(CENTER, CENTER);
+
+    //tekst based on the prediction, for demonstration purposes 
+    if (Y.equals("A")) { 
+      direction = "Looks good!";
+    } else if (Y.equals("B")) { 
+      direction = "You are looking down";
+    } else if (Y.equals("C")) { 
+      direction = "You are looking to the left";
+    } else if (Y.equals("D")) { 
+      direction = "You are looking up";
+    } else if (Y.equals("E")) { 
+      direction = "You are looking to the right";
+    };
+
+
+
+    //printing the text 
+    String text = 
+      direction +
+      "\n Prediction: "+Y+
+      "\n x="+rawData[0]+
+      "\n y="+rawData[1]+
+      "\n z="+rawData[2];
+    text(text, width/2, height/2);
+
+    //give data back via the serial port 
+    switch(Y) {
+    case "A": 
+      port.write('a'); 
+      break;
+    case "B": 
+      port.write('b'); 
+      break;
+    case "C": 
+      port.write('c'); 
+      break;
+    case "D": 
+      port.write('d'); 
+      break;
+    case "E": 
+      port.write('e'); 
+      break;
+    default: 
+      break;
+    }
+    dataUpdated = false;
+  }
+}
+
+//serial port connection checking for new carriages of data 
+void serialEvent(Serial port) {   
+  String inData = port.readStringUntil('\n');  // read the serial string until seeing a carriage return
+  if (!dataUpdated) 
+  {
+    if (inData.charAt(0) == 'A') {
+      rawData[0] = int(trim(inData.substring(1)));
+    }
+    if (inData.charAt(0) == 'B') {
+      rawData[1] = int(trim(inData.substring(1)));
+    }
+    if (inData.charAt(0) == 'C') {
+      rawData[2] = int(trim(inData.substring(1)));
+      dataUpdated = true;
+    }
+  }
+  return;
+}
